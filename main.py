@@ -20,7 +20,7 @@ def getSongLyrics(artist, songTitle):
 
 if __name__ == '__main__':
     t = time.time()
-    artist = getArtist('Longus Mongus')
-    song = getSongLyrics(artist, 'Schließe die Augen')
+    artist = getArtist('the avett brothers')
+    song = getSongLyrics(artist, 'around the world')
     print(song.lyrics)
     print('\n\nIt took:\t{} seconds'.format(time.time() - t))
