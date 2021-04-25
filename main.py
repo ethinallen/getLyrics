@@ -57,7 +57,7 @@ def put_lyrics(song, lyrics, dynamodb=None):
 def translate(lyrics):
     translate = boto3.client(service_name='translate', aws_access_key_id=keys.access_key_id, aws_secret_access_key=keys.access_key, region_name=keys.region, use_ssl=True)
     result = translate.translate_text(Text=lyrics, SourceLanguageCode="auto", TargetLanguageCode="en")
-    print(result.get('TranslatedText'))
+    return result
 
 # return song lyrics as string
 def getSongLyrics(artist, songTitle):
@@ -74,9 +74,17 @@ if __name__ == '__main__':
     artist = getArtist(artistName)
     song = getSongLyrics(artist, songName)
 
+
+
     key = artistName + songName
-    put_lyrics(key, song.lyrics)
 
     print(song.lyrics)
-    translate(song.lyrics)
+    translation = translate(song.lyrics)
+    print(translation.get('TranslatedText'))
+
+    nativeKey = artistName+songName+translation.get('SourceLanguageCode')
+    enKey = artistName+songName+translation.get('TargetLanguageCode')
+    put_lyrics(nativeKey, song.lyrics)
+    put_lyrics(enKey, translation.get('TranslatedText'))
+
     sys.stdout.flush()
