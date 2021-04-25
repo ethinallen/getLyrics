@@ -1,2 +1,5 @@
 # getLyrics
-making the backend for ubersetzen; given a song title get the lyrics in the native language and the desired translation
+- [ ] Write to DB
+- [ ] Check exists
+  - [ ] Fetch existing lyrics
+- [ ] Add language to key

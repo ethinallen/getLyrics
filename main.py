@@ -44,7 +44,6 @@ def put_lyrics(song, lyrics, dynamodb=None):
     if not dynamodb:
         dynamodb = boto3.resource('dynamodb', aws_access_key_id=keys.access_key_id, aws_secret_access_key=keys.access_key, region_name=keys.region)
 
-    print(boto3.resource('dynamodb', 'us-east-2').get_available_subresources())
     table = dynamodb.Table('lyrics')
     response = table.put_item(
        Item={
