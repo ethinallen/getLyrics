@@ -52,7 +52,6 @@ def put_lyrics(song, lyrics, dynamodb=None):
             }
     )
 
-    print("PUT")
     return response
 
 # return song lyrics as string
