@@ -39,7 +39,6 @@ def checkExist(artist, song, dynamodb=None):
        Key={
             'song_id': song_id}
     )
-    print(response)
     try:
         return response['Item']
     except:
