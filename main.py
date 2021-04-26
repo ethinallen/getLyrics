@@ -30,15 +30,20 @@ def getArtist(artistName):
         print(e)
 
 def checkExist(artist, song, dynamodb=None):
+    song_id = artistName + songName
     if not dynamodb:
         dynamodb = boto3.resource('dynamodb', aws_access_key_id=keys.access_key_id, aws_secret_access_key=keys.access_key, region_name=keys.region)
 
     table = dynamodb.Table('lyrics')
     response = table.get_item(
        Key={
-            'song_id': '12345690'}
+            'song_id': song_id}
     )
-    return response
+    print(response)
+    try:
+        return response['Item']
+    except:
+        return None
 
 def put_lyrics(song, lyrics, dynamodb=None):
     if not dynamodb:
@@ -71,20 +76,27 @@ if __name__ == '__main__':
     artistName = sys.argv[1].replace("_", " ")
     songName = sys.argv[2].replace("_", " ")
 
-    artist = getArtist(artistName)
-    song = getSongLyrics(artist, songName)
+    nativeKey = artistName + songName
+    lyrics = checkExist(artistName, songName)
+
+    if lyrics:
+        print(lyrics['lyrics'])
+
+    else:
+        artist = getArtist(artistName)
+        song = getSongLyrics(artist, songName)
 
 
 
-    key = artistName + songName
+        key = artistName + songName
 
-    print(song.lyrics)
-    translation = translate(song.lyrics)
-    print(translation.get('TranslatedText'))
+        print(song.lyrics)
+        # translation = translate(song.lyrics)
+        # print(translation.get('TranslatedText'))
 
-    nativeKey = artistName+songName+translation.get('SourceLanguageCode')
-    enKey = artistName+songName+translation.get('TargetLanguageCode')
-    put_lyrics(nativeKey, song.lyrics)
-    put_lyrics(enKey, translation.get('TranslatedText'))
+        # nativeKey = artistName + songName + translation.get('SourceLanguageCode')
+        # enKey = artistName + songName + translation.get('TargetLanguageCode')
+        put_lyrics(key, song.lyrics)
+        # put_lyrics(enKey, translation.get('TranslatedText'))
 
     sys.stdout.flush()
