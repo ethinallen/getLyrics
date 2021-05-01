@@ -4,7 +4,7 @@ import sys
 import boto3
 import lyricsgenius
 import requests
-import csv
+import bcrypt
 
 import keys
 
@@ -29,22 +29,21 @@ def getArtist(artistName):
     except Exception as e:
         print(e)
 
-def checkExist(artist, song, dynamodb=None):
-    song_id = artistName + songName
+def checkExist(nativeKey, dynamodb=None):
     if not dynamodb:
         dynamodb = boto3.resource('dynamodb', aws_access_key_id=keys.access_key_id, aws_secret_access_key=keys.access_key, region_name=keys.region)
 
     table = dynamodb.Table('lyrics')
     response = table.get_item(
        Key={
-            'song_id': song_id}
+            'song_id': nativeKey}
     )
     try:
         return response['Item']
     except:
         return None
 
-def put_lyrics(song, lyrics, dynamodb=None):
+def put_lyrics(song, languageCode, lyrics, dynamodb=None):
     if not dynamodb:
         dynamodb = boto3.resource('dynamodb', aws_access_key_id=keys.access_key_id, aws_secret_access_key=keys.access_key, region_name=keys.region)
 
@@ -52,6 +51,7 @@ def put_lyrics(song, lyrics, dynamodb=None):
     response = table.put_item(
        Item={
             'song_id': song,
+            'language': languageCode,
             'lyrics' : lyrics
             }
     )
@@ -75,27 +75,37 @@ if __name__ == '__main__':
     artistName = sys.argv[1].replace("_", " ")
     songName = sys.argv[2].replace("_", " ")
 
-    nativeKey = artistName + songName
-    lyrics = checkExist(artistName, songName)
+    nativeKeyBytes = bytes((artistName + songName), 'utf-8')
+
+    saltString = keys.salt.decode('utf8')
+    nativeKey = str(bcrypt.hashpw(nativeKeyBytes, keys.salt).decode('utf-8'))
+    nativeKey = nativeKey.replace(saltString, '')
+
+    enKeyBytes = bytes(artistName + songName + 'en',  'utf-8')
+    enKey = str(bcrypt.hashpw(enKeyBytes, keys.salt).decode('utf-8'))
+    enKey = enKey.replace(saltString, '')
+
+    lyrics = checkExist(nativeKey)
+    translated = checkExist(enKey)
 
     if lyrics:
         print(lyrics['lyrics'])
 
+        if translated:
+            print(translated['lyrics'])
+        else:
+            pass
     else:
         artist = getArtist(artistName)
         song = getSongLyrics(artist, songName)
 
-
-
-        key = artistName + songName
-
         print(song.lyrics)
-        # translation = translate(song.lyrics)
-        # print(translation.get('TranslatedText'))
+        translation = translate(song.lyrics)
+        print(translation.get('TranslatedText'))
 
         # nativeKey = artistName + songName + translation.get('SourceLanguageCode')
-        # enKey = artistName + songName + translation.get('TargetLanguageCode')
-        put_lyrics(key, song.lyrics)
-        # put_lyrics(enKey, translation.get('TranslatedText'))
+
+        put_lyrics(nativeKey, translation.get('SourceLanguageCode'),  song.lyrics)
+        put_lyrics(enKey, 'en', translation.get('TranslatedText'))
 
     sys.stdout.flush()
